@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EsLink - Сокращатель ссылок</title>
+    <style>
+        :root {
+            --primary: #8B5FBF;
+            --secondary: #C74BD3;
+            --accent: #E83D84;
+            --dark-bg: #121212;
+            --dark-card: #1E1E1E;
+            --dark-text: #E0E0E0;
+            --dark-border: #333333;
+            --light: #f8f9fa;
+            --success: #6AECB3;
+            --warning: #FF6B9D;
+            --border-radius: 12px;
+            --shadow: 0 10px 20px rgba(0,0,0,0.3);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--dark-bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark-text);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--accent), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .card {
+            background: var(--dark-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: var(--transition);
+            border: 1px solid var(--dark-border);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 15px;
+            background: #2A2A2A;
+            border: 2px solid var(--dark-border);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+            color: var(--dark-text);
+        }
+
+        input[type="url"]:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 95, 191, 0.3);
+        }
+
+        .glow-button {
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glow-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            transition: left 0.7s ease-in-out;
+        }
+
+        .glow-button:hover::before {
+            left: 100%;
+        }
+
+        .glow-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 95, 191, 0.5);
+        }
+
+        .glow-button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .glow-button:disabled::before {
+            display: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: rgba(106, 236, 179, 0.1);
+            border-left: 4px solid var(--success);
+            display: none;
+        }
+
+        .result a {
+            color: var(--success);
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .encrypted-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(139, 95, 191, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .encrypted-url {
+            color: var(--accent);
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .timer span {
+            font-weight: 700;
+            color: var(--warning);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: rgba(139, 95, 191, 0.1);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            color: var(--dark-text);
+            min-width: 120px;
+            border: 1px solid var(--dark-border);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 1px solid var(--dark-border);
+            width: 100%;
+            opacity: 0.7;
+        }
+
+        .promo {
+            background: var(--dark-card);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+            border: 1px solid var(--dark-border);
+            display: none;
+        }
+
+        .promo h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .promo p {
+            margin-bottom: 15px;
+        }
+
+        .promo-btn {
+            background: linear-gradient(to right, var(--warning), var(--accent));
+            width: auto;
+            display: inline-block;
+            padding: 12px 25px;
+        }
+
+        .countdown {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--warning);
+            margin: 10px 0;
+        }
+
+        .error {
+            color: var(--warning);
+            margin-top: 10px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .success {
+            color: var(--success);
+            margin-top: 10px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .cooldown-info {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .redirect-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(139, 95, 191, 0.1);
+            border-radius: var(--border-radius);
+            text-align: center;
+            display: none;
+        }
+
+        /* Стили для рекламных уведомлений */
+        .ad-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 300px;
+            animation: slideIn 0.5s ease-out;
+            display: none;
+        }
+
+        .ad-notification h4 {
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .ad-notification p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .ad-notification .close-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .ad-notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Уведомления рекламы -->
+    <div class="ad-notification" id="ad-notification-1">
+        <h4>🎉 Специальное предложение!</h4>
+        <p>Получите скидку 20% на первый заказ</p>
+        <button class="close-btn" onclick="closeAd(1)">✕</button>
+    </div>
+
+    <div class="ad-notification" id="ad-notification-2">
+        <h4>🔥 Горящие товары!</h4>
+        <p>Товары со скидкой до 50% ждут вас</p>
+        <button class="close-btn" onclick="closeAd(2)">✕</button>
+    </div>
+
+    <div class="ad-notification" id="ad-notification-3">
+        <h4>🚀 Бесплатная доставка!</h4>
+        <p>Закажите сейчас и получите бесплатную доставку</p>
+        <button class="close-btn" onclick="closeAd(3)">✕</button>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">EsLink</div>
+            <div class="tagline">Быстрое и безопасное сокращение ссылок</div>
+        </header>
+
+        <div class="card">
+            <h1>Сократите вашу ссылку</h1>
+            <form id="shorten-form">
+                <div class="form-group">
+                    <label for="url-input">Введите ссылку для сокращения (макс. 128 символов):</label>
+                    <input type="url" id="url-input" placeholder="https://example.com/very-long-url" required>
+                    <div class="error" id="url-error">Ошибка: Ссылка должна быть не длиннее 128 символов</div>
+                    <div class="success" id="url-success">Ссылка успешно сокращена!</div>
+                </div>
+                <button type="submit" id="shorten-btn" class="glow-button">Сократить ссылку</button>
+                <div class="cooldown-info" id="cooldown-info">Вы можете создавать новую ссылку раз в минуту</div>
+            </form>
+            
+            <div class="result" id="result">
+                <div>Ваша сокращенная ссылка: <a href="#" id="short-url" target="_blank"></a></div>
+                <div class="encrypted-info">
+                    <strong>Зашифрованный URL:</strong>
+                    <div class="encrypted-url" id="encrypted-url"></div>
+                    <small>Длина: <span id="url-length">0</span> символов (макс. 64)</small>
+                </div>
+            </div>
+
+            <div class="redirect-info" id="redirect-info">
+                <h3>ХОТИТЕ сокращать ссылки?</h3>
+                <p>Создавайте короткие ссылки для социальных сетей, мессенджеров и любых других целей</p>
+                <button class="glow-button promo-btn" id="promo-btn">Начать использовать EsLink</button>
+            </div>
+        </div>
+
+        <div class="timer" id="redirect-timer">
+            Перенаправление через: <span id="countdown">10</span> секунд
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-value" id="links-count">5179</div>
+                <div class="stat-label">Создано ссылок</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="redirects-count">54912</div>
+                <div class="stat-label">Переходов</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="cooldown-time">60</div>
+                <div class="stat-label">Секунд ожидания</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>EsLink &copy; <span id="current-year"></span> - Надежный сокращатель ссылок</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка текущего года
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            // Элементы DOM
+            const form = document.getElementById('shorten-form');
+            const urlInput = document.getElementById('url-input');
+            const shortenBtn = document.getElementById('shorten-btn');
+            const resultDiv = document.getElementById('result');
+            const shortUrlLink = document.getElementById('short-url');
+            const encryptedUrlElement = document.getElementById('encrypted-url');
+            const urlLengthElement = document.getElementById('url-length');
+            const urlError = document.getElementById('url-error');
+            const urlSuccess = document.getElementById('url-success');
+            const redirectTimer = document.getElementById('redirect-timer');
+            const countdownElement = document.getElementById('countdown');
+            const cooldownInfo = document.getElementById('cooldown-info');
+            const promoBtn = document.getElementById('promo-btn');
+            const redirectInfo = document.getElementById('redirect-info');
+            
+            // Статистика
+            const linksCountElement = document.getElementById('links-count');
+            const redirectsCountElement = document.getElementById('redirects-count');
+            const cooldownTimeElement = document.getElementById('cooldown-time');
+            
+            // Переменные состояния
+            let lastRequestTime = 0;
+            const COOLDOWN_TIME = 60000;
+            let linksCount = 5179;
+            let redirectsCount = 54912;
+            let adInterval;
+            
+            // Словарь замен для популярных доменов и файлов
+            const domainReplacements = {
+                'mediafire.com': 'mf',
+                'youtube.com': 'yt',
+                'google.com': 'gg',
+                'drive.google.com': 'gd',
+                'mega.nz': 'mz',
+                'dropbox.com': 'db',
+                'github.com': 'gh'
+            };
+
+            const fileReplacements = {
+                '.mp4': '.v',
+                '.mp3': '.a',
+                '.pdf': '.d',
+                '.doc': '.w',
+                '.docx': '.wx',
+                '.zip': '.z',
+                '.rar': '.r',
+                '.jpg': '.i',
+                '.jpeg': '.i',
+                '.png': '.i',
+                '.gif': '.i'
+            };
+
+            // Инициализация
+            updateStats();
+            
+            // Проверяем, если это страница редиректа
+            const urlParams = new URLSearchParams(window.location.search);
+            const linkId = urlParams.get('id');
+            
+            if (linkId) {
+                // Это страница редиректа - показываем таймер и запускаем рекламу
+                showRedirectPage(linkId);
+                startAdSequence();
+            }
+            
+            // Обработчик отправки формы
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const url = urlInput.value.trim();
+                
+                if (url.length > 128) {
+                    showError();
+                    return;
+                }
+                
+                const currentTime = Date.now();
+                if (currentTime - lastRequestTime < COOLDOWN_TIME) {
+                    const remainingTime = Math.ceil((COOLDOWN_TIME - (currentTime - lastRequestTime)) / 1000);
+                    cooldownInfo.textContent = `Пожалуйста, подождите ${remainingTime} секунд перед созданием новой ссылки`;
+                    cooldownInfo.style.color = 'var(--warning)';
+                    return;
+                }
+                
+                hideError();
+                hideSuccess();
+                createShortLink(url);
+                lastRequestTime = currentTime;
+                updateCooldownInfo();
+            });
+            
+            // Функция шифрования ссылки
+            function encryptUrl(url) {
+                let processedUrl = url;
+                
+                // Удаляем протокол
+                processedUrl = processedUrl.replace(/^https?:\/\//, '');
+                
+                // Заменяем популярные домены
+                Object.keys(domainReplacements).forEach(domain => {
+                    const regex = new RegExp(domain, 'gi');
+                    processedUrl = processedUrl.replace(regex, domainReplacements[domain]);
+                });
+                
+                // Заменяем расширения файлов
+                Object.keys(fileReplacements).forEach(ext => {
+                    const regex = new RegExp('\\' + ext, 'gi');
+                    processedUrl = processedUrl.replace(regex, fileReplacements[ext]);
+                });
+                
+                // Заменяем длинные слова на короткие коды
+                processedUrl = processedUrl
+                    .replace(/download/gi, 'dl')
+                    .replace(/upload/gi, 'up')
+                    .replace(/file/gi, 'f')
+                    .replace(/folder/gi, 'fd')
+                    .replace(/document/gi, 'doc')
+                    .replace(/image/gi, 'img')
+                    .replace(/video/gi, 'vid')
+                    .replace(/audio/gi, 'aud');
+                
+                // Кодируем оставшуюся часть в base64 и укорачиваем
+                let encoded = btoa(processedUrl).replace(/[+/=]/g, '');
+                
+                // Ограничиваем длину до 48 символов
+                if (encoded.length > 48) {
+                    encoded = encoded.substring(0, 48);
+                }
+                
+                // Создаем финальный URL с доменом eslnk.xo.je
+                const finalUrl = `https://eslnk.xo.je/?id=${encoded}`;
+                
+                return {
+                    encrypted: finalUrl,
+                    length: finalUrl.length,
+                    original: url
+                };
+            }
+            
+            // Функция расшифровки ссылки
+            function decryptUrl(encryptedUrl) {
+                try {
+                    // Извлекаем код из URL eslnk.xo.je
+                    const urlObj = new URL(encryptedUrl);
+                    let code = urlObj.searchParams.get('id');
+                    
+                    if (!code) return null;
+                    
+                    // Декодируем из base64
+                    let decoded = atob(code);
+                    
+                    // Восстанавливаем замененные домены
+                    Object.keys(domainReplacements).forEach(domain => {
+                        const short = domainReplacements[domain];
+                        const regex = new RegExp('\\b' + short + '\\b', 'gi');
+                        decoded = decoded.replace(regex, domain);
+                    });
+                    
+                    // Восстанавливаем расширения файлов
+                    Object.keys(fileReplacements).forEach(ext => {
+                        const short = fileReplacements[ext];
+                        const regex = new RegExp('\\' + short + '(?=\\?|$|\\/)', 'gi');
+                        decoded = decoded.replace(regex, ext);
+                    });
+                    
+                    // Восстанавливаем слова
+                    decoded = decoded
+                        .replace(/\bdl\b/gi, 'download')
+                        .replace(/\bup\b/gi, 'upload')
+                        .replace(/\bf\b/gi, 'file')
+                        .replace(/\bfd\b/gi, 'folder')
+                        .replace(/\bimg\b/gi, 'image')
+                        .replace(/\bvid\b/gi, 'video')
+                        .replace(/\baud\b/gi, 'audio');
+                    
+                    return 'https://' + decoded;
+                } catch (error) {
+                    console.error('Ошибка расшифровки:', error);
+                    return null;
+                }
+            }
+            
+            // Функция показа страницы редиректа
+            function showRedirectPage(linkId) {
+                document.querySelector('.card').style.display = 'none';
+                document.querySelector('.stats').style.display = 'none';
+                redirectTimer.style.display = 'block';
+                redirectInfo.style.display = 'block';
+                
+                const links = JSON.parse(localStorage.getItem('eslink_links') || '[]');
+                const link = links.find(l => l.id === linkId);
+                
+                if (link) {
+                    let countdown = 10;
+                    countdownElement.textContent = countdown;
+                    
+                    const countdownInterval = setInterval(function() {
+                        countdown--;
+                        countdownElement.textContent = countdown;
+                        
+                        if (countdown <= 0) {
+                            clearInterval(countdownInterval);
+                            clearInterval(adInterval);
+                            redirectsCount++;
+                            updateStats();
+                            
+                            // Расшифровываем URL перед перенаправлением
+                            const originalUrl = decryptUrl(link.encrypted);
+                            if (originalUrl) {
+                                window.location.href = originalUrl;
+                            } else {
+                                window.location.href = link.original;
+                            }
+                        }
+                    }, 1000);
+                } else {
+                    countdownElement.textContent = '0';
+                    redirectTimer.innerHTML = 'Ссылка не найдена или устарела';
+                }
+            }
+            
+            // Запуск последовательности рекламных уведомлений
+            function startAdSequence() {
+                let adIndex = 1;
+                
+                // Показываем первое уведомление сразу
+                showAd(adIndex);
+                
+                // Запускаем интервал для следующих уведомлений
+                adInterval = setInterval(function() {
+                    adIndex++;
+                    if (adIndex > 3) adIndex = 1;
+                    showAd(adIndex);
+                }, 3000);
+            }
+            
+            // Показать рекламное уведомление
+            function showAd(index) {
+                for (let i = 1; i <= 3; i++) {
+                    document.getElementById(`ad-notification-${i}`).style.display = 'none';
+                }
+                
+                const ad = document.getElementById(`ad-notification-${index}`);
+                ad.style.display = 'block';
+                
+                setTimeout(() => {
+                    if (ad.style.display === 'block') {
+                        ad.style.display = 'none';
+                    }
+                }, 2500);
+            }
+            
+            // Закрыть рекламное уведомление
+            window.closeAd = function(index) {
+                document.getElementById(`ad-notification-${index}`).style.display = 'none';
+            }
+            
+            // Функция создания сокращенной ссылки
+            function createShortLink(url) {
+                const shortId = generateShortId(8);
+                const shortUrl = `${window.location.origin}${window.location.pathname}?id=${shortId}`;
+                
+                // Шифруем URL
+                const encryptedData = encryptUrl(url);
+                
+                // Сохраняем в localStorage
+                saveLinkToStorage(url, shortUrl, shortId, encryptedData.encrypted);
+                
+                // Показать результат
+                shortUrlLink.href = shortUrl;
+                shortUrlLink.textContent = shortUrl;
+                encryptedUrlElement.textContent = encryptedData.encrypted;
+                urlLengthElement.textContent = encryptedData.length;
+                resultDiv.style.display = 'block';
+                showSuccess();
+                
+                linksCount++;
+                updateStats();
+                urlInput.value = '';
+            }
+            
+            function saveLinkToStorage(originalUrl, shortUrl, shortId, encryptedUrl) {
+                const links = JSON.parse(localStorage.getItem('eslink_links') || '[]');
+                links.push({
+                    id: shortId,
+                    original: originalUrl,
+                    short: shortUrl,
+                    encrypted: encryptedUrl,
+                    created: new Date().toISOString(),
+                    clicks: 0
+                });
+                localStorage.setItem('eslink_links', JSON.stringify(links));
+            }
+            
+            function generateShortId(maxLength = 8) {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < maxLength; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+            
+            function showError() {
+                urlError.style.display = 'block';
+                urlSuccess.style.display = 'none';
+            }
+            
+            function hideError() {
+                urlError.style.display = 'none';
+            }
+            
+            function showSuccess() {
+                urlSuccess.style.display = 'block';
+                urlError.style.display = 'none';
+            }
+            
+            function hideSuccess() {
+                urlSuccess.style.display = 'none';
+            }
+            
+            function updateCooldownInfo() {
+                const currentTime = Date.now();
+                const timePassed = currentTime - lastRequestTime;
+                
+                if (timePassed < COOLDOWN_TIME) {
+                    const remainingTime = Math.ceil((COOLDOWN_TIME - timePassed) / 1000);
+                    cooldownInfo.textContent = `Вы можете создать следующую ссылку через ${remainingTime} секунд`;
+                    cooldownInfo.style.color = 'var(--warning)';
+                    setTimeout(updateCooldownInfo, 1000);
+                } else {
+                    cooldownInfo.textContent = 'Вы можете создавать новую ссылку раз в минуту';
+                    cooldownInfo.style.color = 'var(--success)';
+                }
+            }
+            
+            function updateStats() {
+                linksCountElement.textContent = linksCount;
+                redirectsCountElement.textContent = redirectsCount;
+                cooldownTimeElement.textContent = COOLDOWN_TIME / 1000;
+                localStorage.setItem('eslink_stats', JSON.stringify({
+                    linksCount,
+                    redirectsCount
+                }));
+            }
+            
+            promoBtn.addEventListener('click', function() {
+                window.location.href = window.location.origin + window.location.pathname;
+            });
+            
+            updateCooldownInfo();
+        });
+    </script>
+</body>
+</html>
